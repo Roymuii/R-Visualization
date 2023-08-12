@@ -1,2 +1,2 @@
 # Animation map
-unemployment rate in the United States 
+Unemployment rate in the United States 
