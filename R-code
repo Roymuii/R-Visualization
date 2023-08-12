@@ -1,0 +1,82 @@
+#Imtira Anantharagsan 623320111-6 
+
+library(tidyverse)
+library(ggplot2)
+library(maps)
+library(mapdata)
+library(readxl)
+library(gganimate)
+library(gifski)
+
+getwd()
+setwd("D:/logis 2021")
+getwd()
+
+US_un <- read_excel("un.xlsx")
+base<-map_data("state")
+
+data1 <- read_excel("un.xlsx") %>%
+  mutate(state = tolower(state)) %>%
+  select(year , state , rate)  %>% 
+  inner_join(.,map_data("state"), by = c("state" = "region"))
+
+#-------------------------------------------------------------------------------
+# check data 
+check_state <- map_data("state") %>% 
+  select(region) %>% 
+  distinct()
+
+miss_data<-anti_join(data1 , check_state  , by =c("state" = "region"))
+
+#-------------------------------------------------------------------------------
+# My Legend 
+max(data1$rate)
+data1$rate<-cut(data1$rate,  breaks = c(0,3,6,9,12,15,18) , dig.lab = 0,  
+                include.lowest = T )
+levels(data1$rate)
+
+#-------------------------------------------------------------------------------
+# for edit animation 
+text_c <- "#DCDCDC"
+backgroud <- "#000000"
+
+#--------------------------------------------------------------------------------
+Animate <- 
+  ggplot() + 
+  geom_polygon(data= data1 ,aes(x=long, y=lat,fill = rate,group=group)) +
+  geom_polygon(data = base ,aes(x=long, y=lat,group=group),color = "gray90" , fill=NA)+
+  theme_minimal() +
+  labs(x = NULL , y = NULL) + 
+  ggtitle("Unemployment Rate in USA", subtitle = '{closest_state}') +
+  theme_void() +
+  scale_fill_manual(name= "Unemployment Rate",
+                    values=rev(c('#191970', '#000080', '#00008b', 
+                                 '#4682b4', '#b0c4de',"#faf0e6")),
+                    labels=c("< 4%", "4-5%","7-9%","8-12%","13-15%","16% >"), 
+                    drop=F) + 
+  guides(fill = guide_legend(
+    direction = "horizontal" ,
+    keywidth = unit(1.5 , units = "cm") ,
+    keyheight = unit(4 , unit = "mm") ,
+    title.position = "top" , 
+    label.position = "bottom" , 
+    title.hjust = 0 ,
+    label.hjust = 0.5 ,
+    nrow = 1,
+    byrow = T )) + 
+  theme(legend.position = "bottom") +
+  theme(plot.title = element_text(face = "bold" ,hjust=0.5,vjust = -5 , size = 30 , colour = text_c) , 
+        plot.background = element_rect(fill=backgroud),
+        plot.subtitle = element_text(face = "bold",colour = text_c ,hjust = 0.03 ,vjust = -49 , size = 35),
+        legend.text = element_text(color = text_c , size = 8) ,
+        legend.title = element_text(colour = text_c , size = 9) ,
+        legend.position = c(0.2, 0.125) ,
+        plot.margin = margin(0, 0.5, 0.25, 0.5, "cm")) +
+  transition_states(year , transition_length = 1,state_length = 3) 
+#--------------------------------------------------------------------------------
+render_ani <- animate(Animate, renderer = gifski_renderer("Animation_6233201116.gif"), 
+                      duration = 40 ,width = 11, height = 7, units = "in", 
+                      res = 300, dev= "png", end_pause = 10)
+
+
+
